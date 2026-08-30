@@ -62,12 +62,13 @@
 
   .titlelbl{ position:absolute; left:4px; right:4px; font-size:9.5px; font-weight:700; line-height:1.15; cursor:pointer; pointer-events:none; color:var(--ink); }
 
-  .dotcluster{ position:absolute; left:2px; right:2px; display:flex; flex-wrap:wrap; align-content:flex-start; gap:2px; padding-top:1px; }
-  .dotcluster.hidden-layer{ display:none; }
-  .dot{ width:8px; height:8px; border-radius:50%; cursor:pointer; box-shadow:0 0 0 1.5px #fff; flex-shrink:0; }
-  .dot.pink{ background:var(--pink-d); }
-  .dot.lilac{ background:var(--lilac-d); }
-  .dot:hover{ box-shadow:0 0 0 1.5px #fff, 0 0 0 3px rgba(0,0,0,.4); }
+  .axiscol{ position:relative; }
+  .axisline{ position:absolute; top:0; bottom:0; right:0; width:2px; background:#2B2B2B; }
+  .axdot{ position:absolute; width:9px; height:9px; border-radius:50%; cursor:pointer; box-shadow:0 0 0 1.5px #fff; transform:translateY(-50%); }
+  .axdot.hidden-layer{ display:none; }
+  .axdot.blue{ background:var(--blue-d); }
+  .axdot.peach{ background:var(--peach-d); }
+  .axdot:hover{ box-shadow:0 0 0 1.5px #fff, 0 0 0 3px rgba(0,0,0,.4); z-index:5; }
 
   .lj-hit{ box-shadow:0 0 0 2px var(--ink) !important; z-index:6; }
   .lj-miss{ opacity:.22 !important; }
@@ -100,7 +101,7 @@
 <body>
 
 <h1>BRITISH HISTORY</h1>
-<p class="sub">Compacte verticale banden — Historisch, Dynastiek en Literair naast elkaar. Klik voor de volledige info.</p>
+<p class="sub">Compacte verticale banden — Historical, Dynastic en Literary naast elkaar. Klik voor de volledige info.</p>
 
 <div class="toolbar">
   <div class="group">
@@ -109,11 +110,11 @@
   </div>
   <div class="group">
     <label class="gl">Lagen:</label>
-    <button class="chip active" data-layer="periods">Historisch</button>
-    <button class="chip active" data-layer="dynasties">Dynastiek</button>
-    <button class="chip active" data-layer="literary">Literair</button>
-    <button class="chip active" data-layer="events">Gebeurtenissen</button>
-    <button class="chip active" data-layer="writers">Schrijvers &amp; boeken</button>
+    <button class="chip active" data-layer="periods">Historical</button>
+    <button class="chip active" data-layer="dynasties">Dynastic</button>
+    <button class="chip active" data-layer="literary">Literary</button>
+    <button class="chip active" data-layer="events">Events</button>
+    <button class="chip active" data-layer="writers">Writers &amp; books</button>
   </div>
   <div class="group">
     <label class="gl">Leerjaar:</label>
@@ -130,11 +131,11 @@
 </div>
 
 <div class="legend">
-  <span><i style="background:var(--blue)"></i> Historisch (periodes)</span>
-  <span><i style="background:var(--green)"></i> Dynastiek</span>
-  <span><i style="background:var(--peach)"></i> Literair</span>
-  <span><i style="background:var(--pink-d);border-radius:50%;"></i> Gebeurtenis (stip, per eeuw)</span>
-  <span><i style="background:var(--lilac-d);border-radius:50%;"></i> Schrijver/boek (stip, per eeuw)</span>
+  <span><i style="background:var(--blue)"></i> Historical (periods)</span>
+  <span><i style="background:var(--green)"></i> Dynastic</span>
+  <span><i style="background:var(--peach)"></i> Literary</span>
+  <span><i style="background:var(--blue-d);border-radius:50%;"></i> Event (dot, on the timeline)</span>
+  <span><i style="background:var(--peach-d);border-radius:50%;"></i> Writer/book (dot, on the timeline)</span>
 </div>
 
 <div class="page" id="page"></div>
@@ -151,13 +152,13 @@ const NOW = new Date().getFullYear();
 const CFG = { startYear:0, endYear: NOW };
 const CENTURY_H = 45;              // px per 100 years — fixed, keeps the whole thing ~A4-tall
 const PX_PER_YEAR = CENTURY_H/100;
-const COL_W = 215, LABEL_W = 46, GAP = 8;
+const COL_W = 190, LABEL_W = 44, AXIS_COL_W = 112, GAP = 8;
 const TITLE_MIN_GAP = 13;          // minimum px between two consecutive title labels in the same column
 
 const CATS = {
-  periods:  {color:'blue',  label:'Historisch',  kind:'bar'},
-  dynasties:{color:'green', label:'Dynastiek',   kind:'bar'},
-  literary: {color:'peach', label:'Literair',    kind:'bar'},
+  periods:  {color:'blue',  label:'Historical',  kind:'bar'},
+  dynasties:{color:'green', label:'Dynastic',   kind:'bar'},
+  literary: {color:'peach', label:'Literary',    kind:'bar'},
   events:   {color:'pink',  label:'Gebeurtenissen',      kind:'point', hostCat:'periods'},
   writers:  {color:'lilac', label:'Schrijvers & boeken', kind:'point', hostCat:'literary'}
 };
@@ -280,7 +281,8 @@ function escapeAttr(s){ return (s||'').replace(/"/g,'&quot;'); }
 /* Background bars: one continuous, proportionally-sized div per item,
    stacked top-to-bottom. Title labels are rendered as a separate layer
    so a very short item's text can still get a minimum amount of room
-   without distorting the (accurate) background bar height. */
+   without distorting the (accurate) background bar height. Bands never
+   host dots anymore, so nothing sits on top blocking a click. */
 function renderBandColumn(cat){
   const items = [...DATA[cat]].sort((a,b) => (a.startYear ?? a.year) - (b.startYear ?? b.year));
   let bg = '';
@@ -298,26 +300,34 @@ function renderBandColumn(cat){
     lastLabelBottom = labelTop + TITLE_MIN_GAP;
   });
 
-  const hostedCat = Object.keys(CATS).find(c => CATS[c].hostCat === cat);
-  let dots = '';
-  if (hostedCat){
-    const byCentury = {};
-    DATA[hostedCat].forEach(it => {
-      const y = it.year !== undefined ? it.year : it.startYear;
-      const c = Math.floor(clampY(y) / 100);
-      byCentury[c] = byCentury[c] || [];
-      byCentury[c].push(it);
-    });
-    Object.keys(byCentury).forEach(c => {
-      const top = c * CENTURY_H;
-      const dotsHtml = byCentury[c].map(it =>
-        `<div class="dot ${CATS[hostedCat].color}" data-id="${it.id}" title="${escapeAttr(it.title)}"></div>`
-      ).join('');
-      dots += `<div class="dotcluster" data-cat="${hostedCat}" style="top:${top}px;height:${CENTURY_H}px;">${dotsHtml}</div>`;
-    });
-  }
+  return { bg, labels };
+}
 
-  return { bg, labels, dots };
+/* Events + writers now live in one shared marker lane to the left of a
+   plain black axis line, right-aligned against it, colour-coded to match
+   their parent band (blue = event/Historical, tan = writer/Literary).
+   When two markers land close together in time they stack outward
+   (further left) instead of overlapping, so every dot stays clickable. */
+const DOT_D = 9, DOT_GAP = 3, LEVEL_W = DOT_D + DOT_GAP, MAX_DOT_LEVELS = 9;
+function renderAxisMarkers(){
+  const items = [];
+  DATA.events.forEach(it => items.push({ it, cat:'events', y: it.year !== undefined ? it.year : it.startYear }));
+  DATA.writers.forEach(it => items.push({ it, cat:'writers', y: it.year !== undefined ? it.year : it.startYear }));
+  items.sort((a,b) => a.y - b.y);
+
+  const maxLevels = MAX_DOT_LEVELS;
+  const levelBottoms = new Array(maxLevels).fill(-999);
+  let html = '';
+  items.forEach(m => {
+    const top = yToPx(m.y);
+    let lvl = maxLevels - 1;
+    for (let i=0;i<maxLevels;i++){ if (levelBottoms[i] + 2 <= top){ lvl = i; break; } }
+    levelBottoms[lvl] = top + DOT_D;
+    const dotColor = m.cat === 'events' ? 'blue' : 'peach';
+    const right = 6 + lvl*LEVEL_W;
+    html += `<div class="axdot ${dotColor}" data-id="${m.it.id}" title="${escapeAttr(m.it.title)}" style="top:${top}px;right:${right}px;"></div>`;
+  });
+  return html;
 }
 
 function render(){
@@ -332,20 +342,30 @@ function render(){
   }
 
   let colsHtml = `<div class="yearcol" style="width:${LABEL_W}px;height:${h}px;">${yearLabelsHtml}</div>`;
+
+  colsHtml += `
+    <div style="width:${AXIS_COL_W}px;">
+      <div class="collabel" style="background:#EFEAE0;color:var(--muted);">EVENTS</div>
+      <div class="axiscol" data-cat="axis" style="height:${h}px;">
+        <div class="axisline"></div>
+        ${renderAxisMarkers()}
+      </div>
+    </div>`;
+
   BAND_ORDER.forEach(cat => {
-    const { bg, labels, dots } = renderBandColumn(cat);
+    const { bg, labels } = renderBandColumn(cat);
     colsHtml += `
       <div style="width:${COL_W}px;">
         <div class="collabel ${CATS[cat].color}">${CATS[cat].label}</div>
         <div class="band" data-cat="${cat}" style="height:${h}px;${centuryGrid}">
-          ${bg}${labels}${dots}
+          ${bg}${labels}
         </div>
       </div>`;
   });
 
   page.innerHTML = `<div class="cols">${colsHtml}</div>`;
 
-  document.querySelectorAll('.segbg[data-id], .titlelbl[data-id], .dot[data-id]').forEach(el => {
+  document.querySelectorAll('.segbg[data-id], .titlelbl[data-id], .axdot[data-id]').forEach(el => {
     el.style.pointerEvents = 'auto';
     el.addEventListener('click', () => openModal(el.getAttribute('data-id')));
   });
@@ -358,12 +378,13 @@ function applyLayerVisibility(){
   document.querySelectorAll('.band[data-cat]').forEach(b => {
     b.classList.toggle('hidden-layer', !activeLayers.has(b.getAttribute('data-cat')));
   });
-  document.querySelectorAll('.dotcluster[data-cat]').forEach(dc => {
-    dc.classList.toggle('hidden-layer', !activeLayers.has(dc.getAttribute('data-cat')));
+  document.querySelectorAll('.axdot[data-id]').forEach(dot => {
+    const found = findItem(dot.getAttribute('data-id'));
+    dot.classList.toggle('hidden-layer', !(found && activeLayers.has(found.cat)));
   });
 }
 function applyLjFilter(){
-  document.querySelectorAll('.segbg[data-id], .dot[data-id]').forEach(el => {
+  document.querySelectorAll('.segbg[data-id], .axdot[data-id]').forEach(el => {
     el.classList.remove('lj-hit','lj-miss');
     if (ljFilter !== 0){
       const found = findItem(el.getAttribute('data-id'));
