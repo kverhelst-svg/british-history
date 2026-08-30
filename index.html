@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>British History — compacte verticale banden (A4)</title>
+<style>
+  :root{
+    --bg:#F8F4EE;
+    --pink-d:#B24A73;
+    --green:#CBD6BE; --green-d:#3B4A29;
+    --peach:#F0D0A8; --peach-d:#6B4712;
+    --blue:#C9DAE8; --blue-d:#1B4A70;
+    --lilac-d:#6B4FA8;
+    --ink:#2B2B2B; --muted:#7A756E;
+    --lj4:#3F9C97; --lj5:#6C6FC4; --lj6:#D97F4A;
+  }
+  * { box-sizing: border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; padding:20px; }
+  h1{ font-size:20px; font-weight:700; letter-spacing:.5px; margin:0 0 3px; }
+  .sub{ color:var(--muted); font-size:12px; margin:0 0 12px; }
+
+  .toolbar{ display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; background:#fff; border:1px solid #E7E2D8; border-radius:12px; padding:8px 14px; margin-bottom:14px; }
+  .group{ display:flex; gap:6px; align-items:center; padding-right:12px; border-right:1px solid #E7E2D8; }
+  .group:last-child{ border-right:none; }
+  .group label.gl{ font-size:11.5px; color:var(--muted); margin-right:2px; }
+  button.chip{ border:1px solid #DDD6C8; background:#fff; color:var(--ink); border-radius:999px; padding:4px 11px; font-size:12px; cursor:pointer; white-space:nowrap; }
+  button.chip:hover{ background:#F3EFE6; }
+  button.chip.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  button.chip.lj4.active{ background:var(--lj4); border-color:var(--lj4); }
+  button.chip.lj5.active{ background:var(--lj5); border-color:var(--lj5); }
+  button.chip.lj6.active{ background:var(--lj6); border-color:var(--lj6); }
+  .switch-wrap{ display:flex; align-items:center; gap:6px; font-size:12px; }
+  .switch{ position:relative; width:36px; height:19px; display:inline-block; cursor:pointer; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .slider{ position:absolute; inset:0; background:#D6D0C3; border-radius:999px; transition:.15s; }
+  .slider:before{ content:""; position:absolute; width:15px; height:15px; left:2px; top:2px; background:#fff; border-radius:50%; transition:.15s; }
+  input:checked + .slider{ background:var(--ink); }
+  input:checked + .slider:before{ transform:translateX(17px); }
+
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:10.5px; color:var(--muted); margin-bottom:8px; padding-left:52px; }
+  .legend span{ display:inline-flex; align-items:center; gap:4px; }
+  .legend i{ width:9px; height:9px; border-radius:2px; display:inline-block; }
+
+  .page{ max-width:780px; margin:0 auto; background:#fff; border:1px solid #E7E2D8; border-radius:12px; padding:16px 18px 26px; }
+  .cols{ display:flex; gap:8px; position:relative; }
+  .collabel{ font-size:10.5px; font-weight:700; letter-spacing:.5px; text-align:center; padding:6px 4px; border-radius:8px; margin-bottom:6px; }
+  .collabel.blue{ background:var(--blue); color:var(--blue-d); }
+  .collabel.green{ background:var(--green); color:var(--green-d); }
+  .collabel.peach{ background:var(--peach); color:var(--peach-d); }
+
+  .yearcol{ flex-shrink:0; position:relative; }
+  .yearcol .yl{ position:absolute; font-size:9px; color:var(--muted); font-weight:600; transform:translateY(-50%); right:4px; }
+
+  .band{ position:relative; border-radius:6px; overflow:hidden; background-repeat:no-repeat; }
+  .band.hidden-layer{ display:none; }
+
+  .segbg{ position:absolute; left:0; right:0; border-radius:3px; cursor:pointer; }
+  .segbg.blue{ background:var(--blue); }
+  .segbg.green{ background:var(--green); }
+  .segbg.peach{ background:var(--peach); }
+  .segbg:hover{ filter:brightness(0.94); }
+
+  .titlelbl{ position:absolute; left:4px; right:4px; font-size:9.5px; font-weight:700; line-height:1.15; cursor:pointer; pointer-events:none; color:var(--ink); }
+
+  .dotcluster{ position:absolute; left:2px; right:2px; display:flex; flex-wrap:wrap; align-content:flex-start; gap:2px; padding-top:1px; }
+  .dotcluster.hidden-layer{ display:none; }
+  .dot{ width:8px; height:8px; border-radius:50%; cursor:pointer; box-shadow:0 0 0 1.5px #fff; flex-shrink:0; }
+  .dot.pink{ background:var(--pink-d); }
+  .dot.lilac{ background:var(--lilac-d); }
+  .dot:hover{ box-shadow:0 0 0 1.5px #fff, 0 0 0 3px rgba(0,0,0,.4); }
+
+  .lj-hit{ box-shadow:0 0 0 2px var(--ink) !important; z-index:6; }
+  .lj-miss{ opacity:.22 !important; }
+
+  .backdrop{ position:fixed; inset:0; background:rgba(30,26,20,.45); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; }
+  .backdrop.show{ display:flex; }
+  .modal{ background:#fff; border-radius:16px; width:100%; max-width:520px; max-height:86vh; overflow:auto; padding:22px 24px; position:relative; }
+  .modal h2{ font-size:16px; margin:0 0 2px; }
+  .modal .period{ font-size:12px; color:var(--muted); margin:0 0 14px; }
+  .modal img{ max-width:100%; border-radius:10px; margin-bottom:12px; }
+  .modal .detail{ font-size:14px; line-height:1.55; white-space:pre-wrap; margin-bottom:14px; }
+  .modal .field{ margin-bottom:12px; }
+  .modal .field label{ display:block; font-size:11.5px; font-weight:700; color:var(--muted); margin-bottom:4px; }
+  .modal input[type=text], .modal input[type=number], .modal textarea, .modal select{ width:100%; border:1px solid #DDD6C8; border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; }
+  .modal textarea{ resize:vertical; }
+  .modal .row2{ display:flex; gap:10px; }
+  .modal .row2 .field{ flex:1; }
+  .modal .ljboxes{ display:flex; gap:14px; }
+  .modal .ljboxes label{ display:flex; align-items:center; gap:5px; font-size:13px; font-weight:400; color:var(--ink); }
+  .modal .btnrow{ display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
+  .modal button{ border-radius:8px; padding:8px 16px; font-size:13px; cursor:pointer; border:1px solid #DDD6C8; background:#fff; }
+  .modal button.primary{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .modal button.linkbtn{ background:var(--blue); color:var(--blue-d); border-color:var(--blue); }
+  .modal .close{ position:absolute; top:14px; right:16px; background:none; border:none; font-size:18px; cursor:pointer; color:var(--muted); }
+  .catlabel{ display:inline-block; font-size:10px; font-weight:700; letter-spacing:.5px; color:var(--muted); text-transform:uppercase; margin-bottom:6px; }
+
+  @media print{ .toolbar{ display:none; } body{ padding:0; } .page{ border:none; max-width:none; } }
+</style>
+</head>
+<body>
+
+<h1>BRITISH HISTORY</h1>
+<p class="sub">Compacte verticale banden — Historisch, Dynastiek en Literair naast elkaar. Klik voor de volledige info.</p>
+
+<div class="toolbar">
+  <div class="group">
+    <label class="switch"><input type="checkbox" id="editToggle"><span class="slider"></span></label>
+    <label for="editToggle" style="cursor:pointer;font-size:12px;">Bewerkmodus: <strong id="editStatus">uit</strong></label>
+  </div>
+  <div class="group">
+    <label class="gl">Lagen:</label>
+    <button class="chip active" data-layer="periods">Historisch</button>
+    <button class="chip active" data-layer="dynasties">Dynastiek</button>
+    <button class="chip active" data-layer="literary">Literair</button>
+    <button class="chip active" data-layer="events">Gebeurtenissen</button>
+    <button class="chip active" data-layer="writers">Schrijvers &amp; boeken</button>
+  </div>
+  <div class="group">
+    <label class="gl">Leerjaar:</label>
+    <button class="chip active" data-lj="0">Alles</button>
+    <button class="chip lj4" data-lj="4">4</button>
+    <button class="chip lj5" data-lj="5">5</button>
+    <button class="chip lj6" data-lj="6">6</button>
+  </div>
+  <div class="group">
+    <button class="chip" id="addBtn" style="display:none;">&plus; Item toevoegen</button>
+    <button class="chip" id="resetBtn">Reset</button>
+    <button class="chip" id="exportBtn">Kopieer data (JSON)</button>
+  </div>
+</div>
+
+<div class="legend">
+  <span><i style="background:var(--blue)"></i> Historisch (periodes)</span>
+  <span><i style="background:var(--green)"></i> Dynastiek</span>
+  <span><i style="background:var(--peach)"></i> Literair</span>
+  <span><i style="background:var(--pink-d);border-radius:50%;"></i> Gebeurtenis (stip, per eeuw)</span>
+  <span><i style="background:var(--lilac-d);border-radius:50%;"></i> Schrijver/boek (stip, per eeuw)</span>
+</div>
+
+<div class="page" id="page"></div>
+
+<div class="backdrop" id="backdrop"><div class="modal" id="modal"></div></div>
+
+<script>
+/* Wachtwoord voor bewerkmodus. Pas dit aan naar je eigen keuze.
+   LET OP: dit is enkel een lichte drempel (view-source toont dit), geen echte beveiliging. */
+const EDIT_PASSWORD = 'britishhistory';
+let authenticated = false;
+
+const NOW = new Date().getFullYear();
+const CFG = { startYear:0, endYear: NOW };
+const CENTURY_H = 45;              // px per 100 years — fixed, keeps the whole thing ~A4-tall
+const PX_PER_YEAR = CENTURY_H/100;
+const COL_W = 215, LABEL_W = 46, GAP = 8;
+const TITLE_MIN_GAP = 13;          // minimum px between two consecutive title labels in the same column
+
+const CATS = {
+  periods:  {color:'blue',  label:'Historisch',  kind:'bar'},
+  dynasties:{color:'green', label:'Dynastiek',   kind:'bar'},
+  literary: {color:'peach', label:'Literair',    kind:'bar'},
+  events:   {color:'pink',  label:'Gebeurtenissen',      kind:'point', hostCat:'periods'},
+  writers:  {color:'lilac', label:'Schrijvers & boeken', kind:'point', hostCat:'literary'}
+};
+const BAND_ORDER = ['periods','dynasties','literary'];
+
+const STORAGE_KEY = 'bh-timeline-v5';
+
+function DEFAULT_DATA(){ return {
+  periods:[
+    {id:'p1', title:'Celtic Period', startYear:-800, endYear:-55, text:'Iron Age farming tribes and warriors.', detail:'The Celts in Britain were Iron Age farming tribes and fierce warriors living in roundhouses before Roman rule.\n\n(Deze tijdlijn start visueel bij jaar 0 — deze periode liep in werkelijkheid al vanaf ca. 800 v.Chr.)', link:'', image:'', lj:[]},
+    {id:'p2', title:'Roman Britain', startYear:-55, endYear:410, text:'Rome governs Britain for four centuries.', detail:"For nearly four centuries, Rome governed Britain, constructing cities, paved roads, and defensive borders like Hadrian's Wall.", link:'', image:'', lj:[]},
+    {id:'p3', title:'Early Medieval Period', startYear:410, endYear:1066, text:'Germanic invasions to Norman conquest.', detail:'Germanic invasions, the rise of Christianity, Viking raids and the Danelaw, and unification under Alfred the Great.', link:'', image:'', lj:[]},
+    {id:'p4', title:'Medieval Period', startYear:1066, endYear:1485, text:'Norman rule to the Wars of the Roses.', detail:'Norman rule, the Magna Carta, the Black Death, the Hundred Years\u2019 War, and the Wars of the Roses.', link:'', image:'', lj:[]},
+    {id:'p5', title:'Early Modern Period', startYear:1485, endYear:1789, text:'Tudors to the Acts of Union.', detail:'The Tudors, the Stuarts, the English Civil War, the Glorious Revolution, and the Acts of Union.', link:'', image:'', lj:[]},
+    {id:'p6', title:'Modern Period', startYear:1789, endYear:1945, text:'Empire, industrialization, the World Wars.', detail:'Empire and industrialization, Irish independence, and the two World Wars.', link:'', image:'', lj:[]},
+    {id:'p7', title:'Contemporary', startYear:1945, endYear:NOW, text:'Decolonization and modern Britain.', detail:'Decolonization across Africa and Asia, and the shaping of modern Britain.', link:'', image:'', lj:[]}
+  ],
+  events:[
+    {id:'e1', title:'Iron Age Britain', year:-800, text:'Celtic farming tribes and warriors.', detail:'The Celts in Britain were Iron Age farming tribes and fierce warriors living in roundhouses before Roman rule.\n\n(Deze tijdlijn start visueel bij jaar 0 — dit punt ligt in werkelijkheid rond 800 v.Chr.)', link:'', image:'', lj:[]},
+    {id:'e2', title:'Rome governs Britain', startYear:-55, endYear:410, text:'Cities, roads, Hadrian\u2019s Wall.', detail:"For nearly four centuries, Rome governed Britain, constructing cities, paved roads, and defensive borders like Hadrian's Wall.", link:'', image:'', lj:[]},
+    {id:'e3', title:'Invasion of Germanic tribes', year:450, text:'Angles, Saxons and Jutes.', detail:'5th century: Invasion of Germanic tribes (Angles, Saxons, Jutes) from Continental Europe to England.', link:'', image:'', lj:[]},
+    {id:'e4', title:"St Augustine's mission", year:597, text:'Christianity spreads in Britain.', detail:'Christianity is on the rise in Britain in the 6th century. St. Augustine leads a mission to the pagan Anglo-Saxons and converts King \u00c6thelberht.', link:'', image:'', lj:[]},
+    {id:'e5', title:'Viking raids begin (Lindisfarne)', year:793, text:'Vikings raid coastal monasteries.', detail:'Vikings started raiding coastal monasteries in the 8th century. In the 9th century they conquered parts of England and established the Danelaw.', link:'', image:'', lj:[]},
+    {id:'e6', title:'Danelaw established', year:886, text:'Vikings conquer parts of England.', detail:'Vikings started raiding coastal monasteries in the 8th century. In the 9th century they conquered parts of England and established the Danelaw.', link:'', image:'', lj:[]},
+    {id:'e7', title:'England unified (Alfred the Great)', year:878, text:'Alfred defends and unifies England.', detail:'Late 9th century: England is unified under king Alfred the Great. He defends England against the Viking raids and conquest.', link:'', image:'', lj:[]},
+    {id:'e8', title:'Battle of Hastings', year:1066, text:'William the Conqueror wins England.', detail:'Norman Period: William the Conqueror wins the fight for England at the Battle of Hastings (1066). His dynasty rules England until the Plantagenets take over in 1154.', link:'', image:'', lj:[]},
+    {id:'e9', title:'Domesday Book', year:1086, text:'A survey of England.', detail:'Domesday Book (1086): a detailed record of a survey of England. It lists who owned what land, how much the property was worth, and how much tax people owed.', link:'', image:'', lj:[]},
+    {id:'e10', title:'Magna Carta', year:1215, text:'Establishes the Rule of Law.', detail:'The Magna Carta (1215): A royal document signed by King John of England in 1215. One of the most famous documents in world history because it established the principle that everyone is subject to the law. English noblemen (barons) rebelled against the King due to his heavy taxes, failed wars, and abuse of power. The charter was a peace treaty to stop the civil war. The document established The Rule of Law: The king could no longer rule arbitrarily (he had to follow the law), no free man could be imprisoned or stripped of his property without a fair trial, and no unfair taxes (the king could not demand taxes without the common consent of the kingdom).', link:'', image:'', lj:[]},
+    {id:'e11', title:'Black Death arrives', year:1348, text:'Plague devastates England.', detail:'Black Death (1348) arrives in England.', link:'', image:'', lj:[]},
+    {id:'e12', title:"Hundred Years' War", startYear:1337, endYear:1453, text:'England and France fight over the French throne.', detail:"The Hundred Years' War (1337-1453) was a long conflict between England and France over who should rule the French throne. England dominated early on at famous battles like Agincourt. However, France launched a dramatic comeback inspired by Joan of Arc and eventually drove the English out. The war transformed both countries from fractured medieval kingdoms into unified, modern nations.", link:'', image:'', lj:[]},
+    {id:'e13', title:'Wars of the Roses', startYear:1455, endYear:1487, text:'Lancaster vs York.', detail:'The Wars of the Roses (1455\u20131487) were bloody civil wars between two rival royal families: House of Lancaster (red rose) and House of York (white rose). Triggered by a weak king and greed for the throne, bringing decades of chaos. The wars ended when Henry Tudor defeated Richard III.', link:'', image:'', lj:[]},
+    {id:'e14', title:'Act of Supremacy', year:1534, text:'Henry VIII heads the Church of England.', detail:'The Act of Supremacy (1534) declared King Henry VIII the Head of the Church of England, permanently breaking ties with the Pope and marking the official birth of the Anglican Church.', link:'', image:'', lj:[]},
+    {id:'e15', title:'Union of Wales & England', year:1536, text:'Welsh citizens gain equal legal status.', detail:'Union of Wales & England (1536) provided Welsh citizens equal legal status, it also established English as the sole language of government, suppressing official use of the Welsh language.', link:'', image:'', lj:[]},
+    {id:'e16', title:'Spanish Armada defeated', year:1588, text:"England's navy repels Spain's fleet.", detail:"The English navy decisively defeated the Spanish Armada in 1588, thwarting Spain's invasion attempt.", link:'', image:'', lj:[]},
+    {id:'e17', title:'Union of the Crowns', year:1603, text:'James VI inherits the English throne.', detail:'The Union of the Crowns (1603) happened when King James VI of Scotland inherited the English throne, bringing both realms under the rule of one king. However, the regions only shared a king, they remained separate countries.', link:'', image:'', lj:[]},
+    {id:'e18', title:'English Civil War', startYear:1642, endYear:1649, text:'Parliament vs the King.', detail:'The English Civil War reached its climax in 1649 when Parliament executed King Charles I, abolished the monarchy, and declared England a republic known as the Commonwealth. Oliver Cromwell then seized control, using the New Model Army to crush royalist uprisings in Scotland and Ireland while establishing a strict Puritan military dictatorship. This permanently shattered the idea of the divine right of kings.', link:'', image:'', lj:[]},
+    {id:'e19', title:'Glorious Revolution', year:1688, text:'James II overthrown.', detail:'The Glorious Revolution (1688) was the largely peaceful overthrow of the Catholic King James II, who was replaced by his Protestant daughter Mary II and her Dutch husband, William of Orange. William and Mary signed the Bill of Rights, permanently limiting royal power.', link:'', image:'', lj:[]},
+    {id:'e20', title:'Acts of Union (Scotland)', year:1707, text:'England and Scotland merge.', detail:'The Acts of Union (1707) permanently joined England and Scotland into a single, unified nation (Kingdom of Great Britain) merging their two parliaments into one centralized government in London.', link:'', image:'', lj:[]},
+    {id:'e21', title:'US Independence', startYear:1776, endYear:1783, text:'American colonies declare independence.', detail:'US independence: Frustrated by British taxes without representation, American colonists rebelled, sparked the Revolutionary War, and declared independence on July 4, 1776, creating a new sovereign nation. Great Britain officially recognized the United States as an independent nation on September 3, 1783.', link:'', image:'', lj:[]},
+    {id:'e22', title:'Act of Union with Ireland', year:1801, text:'Britain and Ireland merge.', detail:'After the Irish Rebellion of 1798, the British forced through the Acts of Union (1801), legally merging Great Britain and Ireland into a single state: the United Kingdom.', link:'', image:'', lj:[]},
+    {id:'e23', title:'Industrial Revolution & Empire', startYear:1760, endYear:1901, text:"Britain becomes the world's workshop.", detail:"During the Victorian era, steam-powered industrialization peaked, making Britain the world's workshop and fueling the expansion of history's largest global empire. This massive empire ruled one-quarter of the globe, encompassing vital territories like India, Canada, and Australia.", link:'', image:'', lj:[]},
+    {id:'e24', title:'World War I', startYear:1914, endYear:1918, text:'Devastates Britain financially.', detail:'The World Wars devastated Britain financially, accelerating the collapse of its empire. Despite victories in 1918 and 1945, severe postwar debt and surging global nationalism forced Britain to decolonize.', link:'', image:'', lj:[]},
+    {id:'e25', title:'Irish Free State', year:1922, text:'Ireland gains independence.', detail:'Following the 1916 rebellion and war, Ireland achieved freedom from England, creating the Irish Free State (1922).', link:'', image:'', lj:[]},
+    {id:'e26', title:'World War II', startYear:1939, endYear:1945, text:'Accelerates decolonization.', detail:'The World Wars devastated Britain financially, accelerating the collapse of its empire. Despite victories in 1918 and 1945, severe postwar debt and surging global nationalism forced Britain to decolonize.', link:'', image:'', lj:[]},
+    {id:'e27', title:'Decolonization', startYear:1947, endYear:1968, text:'India, Ghana, Kenya and others gain independence.', detail:"Decolonization: Following India's independence in 1947, Britain rapidly decolonized across Africa and Asia, withdrawing from nations like Ghana (1957) and Kenya (1963). This dissolved the empire and shrunk British global influence.", link:'', image:'', lj:[]}
+  ],
+  dynasties:[
+    {id:'dy1', title:'House of Wessex (Alfred the Great)', startYear:871, endYear:899, text:'Unifies Anglo-Saxon England.', detail:'Alfred the Great was the first to propose a unified England for the Anglo-Saxon people.', link:'', image:'', lj:[]},
+    {id:'dy2', title:'Norman dynasty', startYear:1066, endYear:1154, text:'William the Conqueror and successors.', detail:'William the Conqueror, a Norman duke from France, ruled England alongside his French-speaking nobility. During this period, French became the language of the elite, heavily influencing the development of English.', link:'', image:'', lj:[]},
+    {id:'dy3', title:'The Plantagenets', startYear:1154, endYear:1485, text:'Henry II, Richard the Lionheart, Henry V.', detail:'The Plantagenet dynasty (1154\u20131485) shaped medieval England by transforming its law, architecture, and language through exceptionally powerful and ambitious rulers. The dynasty consisted of kings like Henry II, who established English Common Law and the jury system, Richard the Lionheart, the legendary Crusader knight, and Henry V, the brilliant warrior who conquered France at the Battle of Agincourt. Under Plantagenet rule, England built magnificent Gothic cathedrals and established early representative Parliaments.', link:'', image:'', lj:[]},
+    {id:'dy4', title:'The Tudors', startYear:1485, endYear:1603, text:'Henry VIII, Elizabeth I.', detail:'The Tudors (1485-1603): A vibrant era shaped by powerful monarchs like Henry VIII and Elizabeth I. This period brought the English Reformation, the birth of the Church of England, and immense cultural growth, ending permanently when Elizabeth died without an heir.', link:'', image:'', lj:[]},
+    {id:'dy5', title:'The Stuarts', startYear:1603, endYear:1649, text:'Religious tension, power struggles.', detail:'The Stuarts (1603-1649): James VI of Scotland became James I of England in 1603, uniting the crowns. This era was defined by deep religious tension and ongoing power struggles between the king and Parliament over taxation and royal authority.', link:'', image:'', lj:[]},
+    {id:'dy6', title:'Commonwealth', startYear:1649, endYear:1660, text:'Republic under Oliver Cromwell.', detail:'Commonwealth (1649-1660): The king was executed at the end of the civil war and England became a republic (the Commonwealth). Oliver Cromwell emerged as the military dictator and Lord Protector.', link:'', image:'', lj:[]},
+    {id:'dy7', title:'Restoration (Stuarts return)', startYear:1660, endYear:1714, text:'Charles II restores the monarchy.', detail:'(Restoration, 1660-1714): The Stuarts returned. Charles II was invited back from exile to reclaim the throne, restoring the traditional monarchy and reopening theaters.', link:'', image:'', lj:[]},
+    {id:'dy8', title:'Georgian period (Hanover)', startYear:1714, endYear:1837, text:'Power shifts to Parliament.', detail:"Georgian period (1714-1837): The Hanoverian dynasty ruled Britain through four Georges and William IV, shifting power from the monarchy to parliament before Victoria's accession. The period is famous for the American Revolutionary War and the Napoleonic Wars.", link:'', image:'', lj:[]},
+    {id:'dy9', title:'Victorian period', startYear:1837, endYear:1901, text:"Victoria's 63-year reign.", detail:"The Victorian period (1837-1901) was defined by Queen Victoria's 63-year reign, which reshaped the monarchy from a politically dominant force into a symbolic institution.", link:'', image:'', lj:[]},
+    {id:'dy10', title:'Edwardian', startYear:1901, endYear:1910, text:'Golden age under Edward VII.', detail:'The Edwardian era (1901-1910) was a brief but golden age of optimism, modernization and luxury under King Edward VII.', link:'', image:'', lj:[]},
+    {id:'dy11', title:'House of Windsor / Modern Britain', startYear:1910, endYear:NOW, text:'Two World Wars, welfare state.', detail:'Modern Britain: Since 1910, the House of Windsor has stabilized the British monarchy through two World Wars and immense social change. Shifting from imperial rulers to ceremonial figureheads, they survived crises like the 1936 abdication and celebrated Queen Elizabeth II\u2019s historic reign.', link:'', image:'', lj:[]}
+  ],
+  literary:[
+    {id:'li1', title:'Anglo-Saxon / Old English', startYear:450, endYear:1066, text:'Beowulf and oral warrior epics.', detail:'The Anglo-Saxon literary period flourished in oral warrior epics like Beowulf. Written in Old-English and combining heroic tribalism and fate with Christian themes.', link:'', image:'', lj:[]},
+    {id:'li2', title:'Middle English', startYear:1066, endYear:1500, text:'Chaucer, Sir Gawain and the Green Knight.', detail:'The Middle English period is marked by two iconic texts, both written at the end of the 14th century. The Canterbury Tales, written by Geoffrey Chaucer, the "Father of English literature." His story uses a framing narrative of twenty-nine pilgrims traveling to Canterbury to deliver a sharp, satirical, and human cross-section of society. Sir Gawain and the Green Knight, written by an anonymous poet, is a chivalric romance that tests the honor and purity of King Arthur\u2019s nephew against a magical foe, balancing the period\u2019s love for French courtly ideals with native English folklore.', link:'', image:'', lj:[]},
+    {id:'li3', title:'Renaissance', startYear:1500, endYear:1660, text:'Shakespeare, Marlowe, Spenser, Donne.', detail:"A period of cultural and literary rebirth (1500-1660) influenced by European humanism, classical Greek and Roman texts, and new scientific ideas. Writers shifted from medieval religious focus to human potential, individualism, and secular themes. Drama reached its peak through the blank-verse tragedies of William Shakespeare and Christopher Marlowe, while poetry thrived with the introduction of the Elizabethan sonnet, Edmund Spenser's grand epic allegories, and John Donne's intellectual Metaphysical poetry.", link:'', image:'', lj:[]},
+    {id:'li4', title:'Restoration literature', startYear:1660, endYear:1700, text:'John Dryden: comedy and satire.', detail:'Restoration literature, led by John Dryden, is characterized by its witty comedy, biting satire, and a shift toward reason.', link:'', image:'', lj:[]},
+    {id:'li5', title:'Neoclassical', startYear:1700, endYear:1780, text:'Pope and Swift: reason and wit.', detail:'Writers like Alexander Pope and Jonathan Swift emphasized reason, order and wit.', link:'', image:'', lj:[]},
+    {id:'li6', title:'Romanticism', startYear:1780, endYear:1832, text:'Wordsworth, Byron, Shelley, Keats.', detail:'Writers like Wordsworth emphasized emotion, sublime nature, imagination & individualism.\n\n(Klik om je eigen lesmateriaal over de British Romantics te koppelen.)', link:'', image:'', lj:[]},
+    {id:'li7', title:'Victorian literature', startYear:1837, endYear:1901, text:'Dickens, the Bront\u00eb sisters.', detail:'Victorian writers explored morality, class anxiety, imperialism, and science vs faith. Famous names include Charles Dickens and the Bront\u00eb sisters.', link:'', image:'', lj:[]},
+    {id:'li8', title:'Modernism', startYear:1900, endYear:1945, text:'Woolf, Joyce, Eliot.', detail:'Writers like Virginia Woolf, James Joyce and T.S. Eliot rejected traditional forms, exploring psychology, stream of consciousness, and post-war disillusionment.', link:'', image:'', lj:[]},
+    {id:'li9', title:'Postmodernism', startYear:1945, endYear:NOW, text:'Rushdie, McEwan, Ishiguro.', detail:'Postmodernism embraced fragmentation, irony, skepticism, and playful subversion of traditional storytelling.', link:'', image:'', lj:[]}
+  ],
+  writers:[
+    {id:'w1', title:'Beowulf', year:725, text:'Anonymous Old English epic poem.', detail:'Anonymous Old English epic poem, part of the Anglo-Saxon literary tradition of oral warrior epics.', link:'', image:'', lj:[]},
+    {id:'w2', title:'Chaucer \u2014 The Canterbury Tales', year:1390, text:'"Father of English literature."', detail:'Geoffrey Chaucer, the "Father of English literature." Uses a framing narrative of twenty-nine pilgrims travelling to Canterbury to deliver a sharp, satirical, human cross-section of society.', link:'', image:'', lj:[]},
+    {id:'w3', title:'Sir Gawain and the Green Knight', year:1400, text:'Anonymous chivalric romance.', detail:'A chivalric romance that tests the honor and purity of King Arthur\u2019s nephew against a magical foe, balancing French courtly ideals with native English folklore.', link:'', image:'', lj:[]},
+    {id:'w4', title:'William Shakespeare', year:1600, text:'Blank-verse tragedies and comedies.', detail:'Drama reached its peak through the blank-verse tragedies of William Shakespeare.', link:'', image:'', lj:[]},
+    {id:'w5', title:'Christopher Marlowe', year:1590, text:'Renaissance blank-verse tragedy.', detail:'Renaissance blank-verse tragedian alongside Shakespeare.', link:'', image:'', lj:[]},
+    {id:'w6', title:'Edmund Spenser \u2014 The Faerie Queene', year:1590, text:'Grand epic allegory.', detail:"Edmund Spenser's grand epic allegory, part of the Renaissance poetic tradition.", link:'', image:'', lj:[]},
+    {id:'w7', title:'John Donne', year:1610, text:'Metaphysical poetry.', detail:"John Donne's intellectual Metaphysical poetry.", link:'', image:'', lj:[]},
+    {id:'w8', title:'John Dryden', year:1670, text:'Leading Restoration writer.', detail:'Restoration literature, led by John Dryden, is characterized by its witty comedy, biting satire, and a shift toward reason.', link:'', image:'', lj:[]},
+    {id:'w9', title:'Alexander Pope', year:1720, text:'Neoclassical reason, order and wit.', detail:'Neoclassical writer who emphasized reason, order and wit.', link:'', image:'', lj:[]},
+    {id:'w10', title:"Jonathan Swift \u2014 Gulliver's Travels", year:1726, text:'Satirical Neoclassical prose.', detail:'Neoclassical writer who emphasized reason, order and wit.', link:'', image:'', lj:[]},
+    {id:'w11', title:'Wordsworth & Coleridge \u2014 Lyrical Ballads', year:1798, text:'The launch of English Romanticism.', detail:'Wordsworth emphasized emotion, sublime nature, imagination & individualism \u2014 launching English Romanticism.', link:'', image:'', lj:[]},
+    {id:'w12', title:'Lord Byron', year:1815, text:'Romantic poet.', detail:'Romantic poet: emotion, sublime nature, imagination & individualism.', link:'', image:'', lj:[]},
+    {id:'w13', title:'Shelley & Keats', year:1820, text:'Romantic poets.', detail:'Romantic poets: emotion, sublime nature, imagination & individualism.', link:'', image:'', lj:[]},
+    {id:'w14', title:'Charles Dickens', year:1850, text:'Victorian social-realist novelist.', detail:'Victorian writer exploring morality, class anxiety, imperialism, and science vs faith.', link:'', image:'', lj:[]},
+    {id:'w15', title:'The Bront\u00eb sisters', year:1847, text:'Jane Eyre, Wuthering Heights.', detail:'Victorian writers exploring morality, class anxiety, imperialism, and science vs faith.', link:'', image:'', lj:[]},
+    {id:'w16', title:'George Eliot', year:1870, text:'Victorian realist novelist.', detail:'Victorian writer exploring morality, class anxiety, imperialism, and science vs faith.', link:'', image:'', lj:[]},
+    {id:'w17', title:'Thomas Hardy', year:1890, text:'Victorian realist novelist.', detail:'Victorian writer exploring morality, class anxiety, imperialism, and science vs faith.', link:'', image:'', lj:[]},
+    {id:'w18', title:'Virginia Woolf', year:1925, text:'Modernist stream of consciousness.', detail:'Rejected traditional narrative forms, exploring psychology, stream of consciousness, and post-war disillusionment.', link:'', image:'', lj:[]},
+    {id:'w19', title:'James Joyce \u2014 Ulysses', year:1922, text:'Landmark Modernist novel.', detail:'Rejected traditional narrative forms, exploring psychology, stream of consciousness, and post-war disillusionment.', link:'', image:'', lj:[]},
+    {id:'w20', title:'T. S. Eliot \u2014 The Waste Land', year:1922, text:'Landmark Modernist poem.', detail:'Rejected traditional forms, exploring psychology, stream of consciousness, and post-war disillusionment.', link:'', image:'', lj:[]},
+    {id:'w21', title:"Salman Rushdie \u2014 Midnight's Children", year:1981, text:'Postmodern, magical realism.', detail:'Postmodernism embraced fragmentation, irony, skepticism, and playful subversion of traditional storytelling.', link:'', image:'', lj:[]},
+    {id:'w22', title:'Kazuo Ishiguro \u2014 The Remains of the Day', year:1989, text:'Postmodern, understated irony.', detail:'Postmodernism embraced fragmentation, irony, skepticism, and playful subversion of traditional storytelling.', link:'', image:'', lj:[]}
+  ]
+};}
+
+let DATA = null;
+let editMode = false;
+let ljFilter = 0;
+let activeLayers = new Set(Object.keys(CATS));
+
+async function loadData(){
+  try{ const r = await window.storage.get(STORAGE_KEY, false); if (r && r.value) return JSON.parse(r.value); }catch(e){}
+  return DEFAULT_DATA();
+}
+async function saveData(){ try{ await window.storage.set(STORAGE_KEY, JSON.stringify(DATA), false); }catch(e){ console.error('save failed', e); } }
+
+function findItem(id){
+  for (const cat of Object.keys(CATS)){ const hit = DATA[cat].find(x=>x.id===id); if (hit) return {item:hit, cat}; }
+  return null;
+}
+function yearLabel(y){ return y<0 ? `${-y} BCE` : `${y}`; }
+function clampY(y){ return Math.max(y, CFG.startYear); }
+function yToPx(y){ return (clampY(y) - CFG.startYear) * PX_PER_YEAR; }
+function numCenturies(){ return Math.ceil((CFG.endYear - CFG.startYear) / 100); }
+function totalHeight(){ return numCenturies() * CENTURY_H; }
+
+function escapeAttr(s){ return (s||'').replace(/"/g,'&quot;'); }
+
+/* Background bars: one continuous, proportionally-sized div per item,
+   stacked top-to-bottom. Title labels are rendered as a separate layer
+   so a very short item's text can still get a minimum amount of room
+   without distorting the (accurate) background bar height. */
+function renderBandColumn(cat){
+  const items = [...DATA[cat]].sort((a,b) => (a.startYear ?? a.year) - (b.startYear ?? b.year));
+  let bg = '';
+  let labels = '';
+  let lastLabelBottom = -999;
+  items.forEach(it => {
+    const s = it.startYear, e = it.endYear;
+    const top = yToPx(s);
+    const bottom = yToPx(e);
+    const h = Math.max(2, bottom - top);
+    bg += `<div class="segbg ${CATS[cat].color}" data-id="${it.id}" style="top:${top}px;height:${h}px;"></div>`;
+
+    let labelTop = Math.max(top, lastLabelBottom + 1);
+    labels += `<div class="titlelbl" data-id="${it.id}" style="top:${labelTop}px;">${it.title}</div>`;
+    lastLabelBottom = labelTop + TITLE_MIN_GAP;
+  });
+
+  const hostedCat = Object.keys(CATS).find(c => CATS[c].hostCat === cat);
+  let dots = '';
+  if (hostedCat){
+    const byCentury = {};
+    DATA[hostedCat].forEach(it => {
+      const y = it.year !== undefined ? it.year : it.startYear;
+      const c = Math.floor(clampY(y) / 100);
+      byCentury[c] = byCentury[c] || [];
+      byCentury[c].push(it);
+    });
+    Object.keys(byCentury).forEach(c => {
+      const top = c * CENTURY_H;
+      const dotsHtml = byCentury[c].map(it =>
+        `<div class="dot ${CATS[hostedCat].color}" data-id="${it.id}" title="${escapeAttr(it.title)}"></div>`
+      ).join('');
+      dots += `<div class="dotcluster" data-cat="${hostedCat}" style="top:${top}px;height:${CENTURY_H}px;">${dotsHtml}</div>`;
+    });
+  }
+
+  return { bg, labels, dots };
+}
+
+function render(){
+  const h = totalHeight();
+  const page = document.getElementById('page');
+
+  const centuryGrid = `background-image:repeating-linear-gradient(to bottom, transparent, transparent ${CENTURY_H-1}px, #EFEAE0 ${CENTURY_H-1}px, #EFEAE0 ${CENTURY_H}px);`;
+
+  let yearLabelsHtml = '';
+  for (let c=0; c<numCenturies(); c++){
+    yearLabelsHtml += `<div class="yl" style="top:${c*CENTURY_H}px;">${yearLabel(CFG.startYear + c*100)}</div>`;
+  }
+
+  let colsHtml = `<div class="yearcol" style="width:${LABEL_W}px;height:${h}px;">${yearLabelsHtml}</div>`;
+  BAND_ORDER.forEach(cat => {
+    const { bg, labels, dots } = renderBandColumn(cat);
+    colsHtml += `
+      <div style="width:${COL_W}px;">
+        <div class="collabel ${CATS[cat].color}">${CATS[cat].label}</div>
+        <div class="band" data-cat="${cat}" style="height:${h}px;${centuryGrid}">
+          ${bg}${labels}${dots}
+        </div>
+      </div>`;
+  });
+
+  page.innerHTML = `<div class="cols">${colsHtml}</div>`;
+
+  document.querySelectorAll('.segbg[data-id], .titlelbl[data-id], .dot[data-id]').forEach(el => {
+    el.style.pointerEvents = 'auto';
+    el.addEventListener('click', () => openModal(el.getAttribute('data-id')));
+  });
+
+  applyLayerVisibility();
+  applyLjFilter();
+}
+
+function applyLayerVisibility(){
+  document.querySelectorAll('.band[data-cat]').forEach(b => {
+    b.classList.toggle('hidden-layer', !activeLayers.has(b.getAttribute('data-cat')));
+  });
+  document.querySelectorAll('.dotcluster[data-cat]').forEach(dc => {
+    dc.classList.toggle('hidden-layer', !activeLayers.has(dc.getAttribute('data-cat')));
+  });
+}
+function applyLjFilter(){
+  document.querySelectorAll('.segbg[data-id], .dot[data-id]').forEach(el => {
+    el.classList.remove('lj-hit','lj-miss');
+    if (ljFilter !== 0){
+      const found = findItem(el.getAttribute('data-id'));
+      const hit = found && found.item.lj && found.item.lj.includes(ljFilter);
+      el.classList.add(hit ? 'lj-hit' : 'lj-miss');
+    }
+  });
+}
+
+function openModal(id){
+  const found = findItem(id); if (!found) return;
+  const { item:c, cat } = found;
+  const backdrop = document.getElementById('backdrop'); const modal = document.getElementById('modal');
+  const periodStr = c.year!==undefined ? yearLabel(c.year) : `${yearLabel(c.startYear)} \u2013 ${yearLabel(c.endYear)}`;
+
+  if (!editMode){
+    modal.innerHTML = `
+      <button class="close" id="closeBtn">&times;</button>
+      <span class="catlabel">${CATS[cat].label}</span>
+      ${c.image ? `<img src="${c.image}" alt="">` : ''}
+      <h2>${c.title}</h2>
+      <p class="period">${periodStr}</p>
+      <div class="detail">${(c.detail || c.text).replace(/\n/g,'<br>')}</div>
+      ${c.link ? `<div class="btnrow"><button class="linkbtn" id="openLinkBtn">Open link &#8599;</button></div>` : ''}
+    `;
+    backdrop.classList.add('show');
+    document.getElementById('closeBtn').onclick = closeModal;
+    if (c.link) document.getElementById('openLinkBtn').onclick = () => window.open(c.link, '_blank');
+  } else {
+    modal.innerHTML = `
+      <button class="close" id="closeBtn">&times;</button>
+      <span class="catlabel">${CATS[cat].label}</span>
+      <h2 style="margin-bottom:14px;">Bewerk item</h2>
+      <div class="field"><label>Titel</label><input type="text" id="f_title" value="${escapeAttr(c.title)}"></div>
+      <div class="row2">
+        <div class="field"><label>Startjaar / jaar</label><input type="number" id="f_start" value="${c.startYear ?? c.year ?? ''}"></div>
+        <div class="field"><label>Eindjaar (leeg = punt)</label><input type="number" id="f_end" value="${c.endYear ?? ''}"></div>
+      </div>
+      <div class="field"><label>Korte tekst (label)</label><textarea id="f_text" rows="2">${c.text}</textarea></div>
+      <div class="field"><label>Volledige info (getoond bij klikken)</label><textarea id="f_detail" rows="6">${c.detail}</textarea></div>
+      <div class="field"><label>Link (URL naar cursusmateriaal)</label><input type="text" id="f_link" value="${escapeAttr(c.link)}" placeholder="https://..."></div>
+      <div class="field"><label>Afbeelding (URL, optioneel)</label><input type="text" id="f_image" value="${escapeAttr(c.image)}" placeholder="https://..."></div>
+      <div class="field"><label>Highlighten bij leerjaar</label>
+        <div class="ljboxes">
+          <label><input type="checkbox" id="f_lj4" ${c.lj.includes(4)?'checked':''}> 4</label>
+          <label><input type="checkbox" id="f_lj5" ${c.lj.includes(5)?'checked':''}> 5</label>
+          <label><input type="checkbox" id="f_lj6" ${c.lj.includes(6)?'checked':''}> 6</label>
+        </div>
+      </div>
+      <div class="btnrow">
+        <button id="cancelBtn">Annuleren</button>
+        <button class="primary" id="saveBtn">Opslaan</button>
+      </div>
+    `;
+    backdrop.classList.add('show');
+    document.getElementById('closeBtn').onclick = closeModal;
+    document.getElementById('cancelBtn').onclick = closeModal;
+    document.getElementById('saveBtn').onclick = async () => {
+      c.title = document.getElementById('f_title').value;
+      const startVal = document.getElementById('f_start').value;
+      const endVal = document.getElementById('f_end').value;
+      if (cat==='events' || cat==='writers'){
+        if (endVal === ''){ c.year = parseInt(startVal,10); delete c.startYear; delete c.endYear; }
+        else { c.startYear = parseInt(startVal,10); c.endYear = parseInt(endVal,10); delete c.year; }
+      } else {
+        c.startYear = parseInt(startVal,10); c.endYear = parseInt(endVal || startVal,10);
+      }
+      c.text = document.getElementById('f_text').value;
+      c.detail = document.getElementById('f_detail').value;
+      c.link = document.getElementById('f_link').value;
+      c.image = document.getElementById('f_image').value;
+      c.lj = [4,5,6].filter(n => document.getElementById('f_lj'+n).checked);
+      await saveData();
+      closeModal();
+      render();
+    };
+  }
+}
+function closeModal(){ document.getElementById('backdrop').classList.remove('show'); }
+
+document.getElementById('backdrop').addEventListener('click', (e) => { if (e.target.id === 'backdrop') closeModal(); });
+
+document.getElementById('editToggle').addEventListener('change', (e) => {
+  if (e.target.checked){
+    if (!authenticated){
+      e.target.checked = false;
+      const pw = prompt('Wachtwoord voor bewerkmodus:');
+      if (pw === null) return;
+      if (pw === EDIT_PASSWORD){
+        authenticated = true; e.target.checked = true; editMode = true;
+      } else {
+        alert('Fout wachtwoord.'); editMode = false;
+      }
+    } else {
+      editMode = true;
+    }
+  } else {
+    editMode = false;
+  }
+  document.getElementById('editStatus').textContent = editMode ? 'aan' : 'uit';
+  document.getElementById('addBtn').style.display = editMode ? 'inline-block' : 'none';
+});
+
+document.getElementById('addBtn').addEventListener('click', openAddModal);
+
+function openAddModal(){
+  const backdrop = document.getElementById('backdrop'); const modal = document.getElementById('modal');
+  const catOptions = Object.keys(CATS).map(cat => `<option value="${cat}">${CATS[cat].label}</option>`).join('');
+  modal.innerHTML = `
+    <button class="close" id="closeBtn">&times;</button>
+    <h2 style="margin-bottom:14px;">Nieuw item toevoegen</h2>
+    <div class="field"><label>Laag</label><select id="f_cat">${catOptions}</select></div>
+    <div class="field"><label>Titel</label><input type="text" id="f_title" value=""></div>
+    <div class="row2">
+      <div class="field"><label>Startjaar / jaar</label><input type="number" id="f_start" value=""></div>
+      <div class="field"><label>Eindjaar (leeg = punt \u2014 enkel voor Gebeurtenissen/Schrijvers)</label><input type="number" id="f_end" value=""></div>
+    </div>
+    <div class="field"><label>Korte tekst (label)</label><textarea id="f_text" rows="2"></textarea></div>
+    <div class="field"><label>Volledige info (getoond bij klikken)</label><textarea id="f_detail" rows="6"></textarea></div>
+    <div class="field"><label>Link (URL naar cursusmateriaal)</label><input type="text" id="f_link" value="" placeholder="https://..."></div>
+    <div class="field"><label>Afbeelding (URL, optioneel)</label><input type="text" id="f_image" value="" placeholder="https://..."></div>
+    <div class="field"><label>Highlighten bij leerjaar</label>
+      <div class="ljboxes">
+        <label><input type="checkbox" id="f_lj4"> 4</label>
+        <label><input type="checkbox" id="f_lj5"> 5</label>
+        <label><input type="checkbox" id="f_lj6"> 6</label>
+      </div>
+    </div>
+    <div class="btnrow">
+      <button id="cancelBtn">Annuleren</button>
+      <button class="primary" id="saveBtn">Toevoegen</button>
+    </div>
+  `;
+  backdrop.classList.add('show');
+  document.getElementById('closeBtn').onclick = closeModal;
+  document.getElementById('cancelBtn').onclick = closeModal;
+  document.getElementById('saveBtn').onclick = async () => {
+    const cat = document.getElementById('f_cat').value;
+    const title = document.getElementById('f_title').value.trim();
+    const startVal = document.getElementById('f_start').value;
+    const endVal = document.getElementById('f_end').value;
+    if (!title || startVal === ''){ alert('Titel en startjaar zijn verplicht.'); return; }
+    const newItem = {
+      id: cat + '_' + Date.now(),
+      title,
+      text: document.getElementById('f_text').value,
+      detail: document.getElementById('f_detail').value,
+      link: document.getElementById('f_link').value,
+      image: document.getElementById('f_image').value,
+      lj: [4,5,6].filter(n => document.getElementById('f_lj'+n).checked)
+    };
+    if (cat === 'events' || cat === 'writers'){
+      if (endVal === '') newItem.year = parseInt(startVal,10);
+      else { newItem.startYear = parseInt(startVal,10); newItem.endYear = parseInt(endVal,10); }
+    } else {
+      newItem.startYear = parseInt(startVal,10);
+      newItem.endYear = parseInt(endVal || startVal,10);
+    }
+    DATA[cat].push(newItem);
+    await saveData();
+    closeModal();
+    render();
+  };
+}
+
+document.querySelectorAll('[data-layer]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const cat = btn.getAttribute('data-layer');
+    if (activeLayers.has(cat)) activeLayers.delete(cat); else activeLayers.add(cat);
+    btn.classList.toggle('active');
+    applyLayerVisibility();
+  });
+});
+document.querySelectorAll('[data-lj]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    ljFilter = parseInt(btn.getAttribute('data-lj'),10);
+    document.querySelectorAll('[data-lj]').forEach(b => b.classList.toggle('active', b===btn));
+    applyLjFilter();
+  });
+});
+document.getElementById('resetBtn').addEventListener('click', async () => {
+  if (!confirm('Alle aanpassingen wissen en teruggaan naar de originele tijdlijn?')) return;
+  DATA = DEFAULT_DATA();
+  await saveData();
+  render();
+});
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  const json = JSON.stringify(DATA, null, 2);
+  try{ await navigator.clipboard.writeText(json); alert('Data gekopieerd naar klembord (JSON) — bewaar dit als back-up.'); }
+  catch(e){ prompt('Kopieer deze data manueel:', json); }
+});
+
+(async function init(){
+  DATA = await loadData();
+  render();
+})();
+</script>
+</body>
+</html>
