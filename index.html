@@ -50,23 +50,24 @@
   .band{ position:relative; border-radius:6px; overflow:hidden; background-repeat:no-repeat; }
   .band.hidden-layer{ display:none; }
 
-  .segbg{ position:absolute; left:0; right:0; border-radius:3px; cursor:pointer; z-index:1; }
+  .segbg{ position:absolute; left:0; right:0; border-radius:3px; cursor:pointer; z-index:1; opacity:.4; transition:opacity .15s; }
   .segbg.blue{ background:var(--blue); }
   .segbg.green{ background:var(--green); }
   .segbg.peach{ background:var(--peach); }
   .segbg:hover{ filter:brightness(0.94); }
 
-  .titlelbl{ position:absolute; left:4px; right:4px; font-size:9.5px; font-weight:700; line-height:1.15; cursor:pointer; pointer-events:none; color:var(--ink); z-index:3; }
+  .titlelbl{ position:absolute; left:4px; right:4px; font-size:9.5px; font-weight:700; line-height:1.15; cursor:pointer; pointer-events:none; color:var(--muted); opacity:.85; z-index:3; transition:opacity .15s, color .15s; }
 
   .axiscol{ position:relative; }
   .axisline{ position:absolute; top:0; bottom:0; right:0; width:2px; background:#2B2B2B; }
-  .axdot{ position:absolute; width:9px; height:9px; border-radius:50%; cursor:pointer; box-shadow:0 0 0 1.5px #fff; transform:translateY(-50%); }
+  .axdot{ position:absolute; width:9px; height:9px; border-radius:50%; cursor:pointer; box-shadow:0 0 0 1.5px #fff; transform:translateY(-50%); opacity:.45; transition:opacity .15s; }
   .axdot.hidden-layer{ display:none; }
   .axdot.blue{ background:var(--blue-d); }
   .axdot.peach{ background:var(--peach-d); }
   .axdot:hover{ box-shadow:0 0 0 1.5px #fff, 0 0 0 3px rgba(0,0,0,.4); z-index:5; }
 
-  .highlighted{ box-shadow:0 0 0 2px var(--ink); filter:saturate(1.4); }
+  .segbg.highlighted, .axdot.highlighted{ opacity:1; }
+  .titlelbl.highlighted{ opacity:1; color:var(--ink); }
 
   .backdrop{ position:fixed; inset:0; background:rgba(30,26,20,.45); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; }
   .backdrop.show{ display:flex; }
@@ -449,7 +450,7 @@ function applyLayerVisibility(){
   });
 }
 function applyHighlights(){
-  document.querySelectorAll('.segbg[data-id], .axdot[data-id]').forEach(el => {
+  document.querySelectorAll('.segbg[data-id], .axdot[data-id], .titlelbl[data-id]').forEach(el => {
     const found = findItem(el.getAttribute('data-id'));
     el.classList.toggle('highlighted', !!(found && found.item.highlighted));
   });
@@ -490,6 +491,7 @@ function openModal(id){
       <div class="field"><label>Afbeelding (URL, optioneel)</label><input type="text" id="f_image" value="${escapeAttr(c.image)}" placeholder="https://..."></div>
       <div class="field hlbox"><label style="margin:0;"><input type="checkbox" id="f_highlight" ${c.highlighted?'checked':''}> Highlighted (springt eruit voor bezoekers)</label></div>
       <div class="btnrow">
+        <button id="deleteBtn" style="border-color:#C24A4A;color:#C24A4A;margin-right:auto;">Verwijderen</button>
         <button id="cancelBtn">Annuleren</button>
         <button class="primary" id="saveBtn">Opslaan</button>
       </div>
@@ -497,6 +499,14 @@ function openModal(id){
     backdrop.classList.add('show');
     document.getElementById('closeBtn').onclick = closeModal;
     document.getElementById('cancelBtn').onclick = closeModal;
+    document.getElementById('deleteBtn').onclick = () => {
+      if (!confirm(`"${c.title}" definitief verwijderen uit de tijdlijn?`)) return;
+      const idx = DATA[cat].findIndex(x => x.id === c.id);
+      if (idx > -1) DATA[cat].splice(idx, 1);
+      unsavedChanges = true; updateUnsavedIndicator();
+      closeModal();
+      render();
+    };
     document.getElementById('saveBtn').onclick = async () => {
       c.title = document.getElementById('f_title').value;
       const startVal = document.getElementById('f_start').value;
