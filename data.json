@@ -75,7 +75,18 @@
       "detail": "Decolonization across Africa and Asia, and the shaping of modern Britain.",
       "link": "",
       "image": "",
-      "highlighted": false
+      "highlighted": true
+    },
+    {
+      "id": "periods_1788160175914",
+      "title": "Jonathan Safran Foer's Extremely Loud and Incredibly Close",
+      "text": "A postmodern book about 9/11 and loss",
+      "detail": "",
+      "link": "",
+      "image": "",
+      "highlighted": false,
+      "startYear": 2001,
+      "endYear": 2001
     }
   ],
   "events": [
@@ -580,7 +591,7 @@
       "detail": "Postmodernism embraced fragmentation, irony, skepticism, and playful subversion of traditional storytelling.",
       "link": "",
       "image": "",
-      "highlighted": false
+      "highlighted": true
     }
   ],
   "writers": [
@@ -803,6 +814,17 @@
       "link": "",
       "image": "",
       "highlighted": false
+    },
+    {
+      "id": "writers_1788160346294",
+      "title": "Jonathan Safran Foer's Extremely Loud and Incredibly Close",
+      "text": "book about loss",
+      "detail": "",
+      "link": "",
+      "image": "",
+      "highlighted": true,
+      "startYear": 2001,
+      "endYear": 2011
     }
   ]
 }
